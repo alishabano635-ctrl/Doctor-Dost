@@ -1,0 +1,260 @@
+<!-- Symptom Checker + First Aid Guide -->
+<section id="symptom-checker" class="card-section">
+  <style>
+    /* Styles scoped to the module (paste into your main CSS if preferred) */
+    #symptom-checker{font-family: Poppins, Arial, sans-serif; background: linear-gradient(180deg,#fff9fb,#f0fcff); padding:20px; border-radius:12px; box-shadow:0 10px 30px rgba(8,30,60,0.06)}
+    #symptom-checker h2{margin:0 0 8px 0; color:#0b4fa1}
+    .sc-grid{display:flex;gap:18px;align-items:stretch}
+    .sc-left{flex:1;min-width:260px}
+    .sc-right{width:320px;background:linear-gradient(180deg,#ffffff, #f7fbff);padding:16px;border-radius:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.6)}
+    .sc-search{display:flex;gap:8px;margin-top:12px}
+    .sc-search input{flex:1;padding:12px 14px;border-radius:10px;border:1px solid #e6f0fb;font-size:15px}
+    .sc-search button{padding:12px 14px;border-radius:10px;border:0;background:#05a; color:#fff; font-weight:600; cursor:pointer}
+    .sc-icons{display:flex;gap:10px;justify-content:space-between;margin-bottom:12px}
+    .sc-icon{flex:1;text-align:center;padding:12px;border-radius:10px;background:linear-gradient(180deg,#f7fbff,#ffffff);box-shadow:0 6px 16px rgba(10,20,40,0.04);cursor:default}
+    .sc-icon svg{width:36px;height:36px;margin-bottom:8px}
+    .results{margin-top:14px;padding:12px;border-radius:10px;background:linear-gradient(180deg,#fff,#fbfeff);min-height:120px}
+    .muted{color:#6b7280}
+    .causes li,.firstaid li{margin:6px 0}
+    .emergency{background:#ffecec;color:#7a0910;padding:10px;border-radius:8px;margin-top:10px;font-weight:700}
+    .suggestions{margin-top:8px;display:flex;flex-wrap:wrap;gap:8px}
+    .suggest-chip{background:#eef8ff;padding:8px 10px;border-radius:999px;cursor:pointer;border:1px solid #d6eefc;font-weight:600}
+    .hint{font-size:13px;color:#4b5563;margin-top:8px}
+    @media(max-width:900px){ .sc-grid{flex-direction:column} .sc-right{width:100%} }
+  </style>
+
+  <h2>Symptom Checker + First Aid Guide</h2>
+  <p class="muted">Type a symptom (e.g., <em>fever</em>, <em>cough</em>, <em>headache</em>) and get possible causes and quick first-aid steps.</p>
+
+  <div class="sc-grid">
+    <div class="sc-left">
+      <div class="sc-search" aria-label="Symptom search">
+        <input id="sc-input" placeholder="Type symptom (fever, cough, chest pain...)" aria-label="Symptom input" />
+        <button id="sc-btn" aria-label="Check symptom">Check</button>
+      </div>
+
+      <div id="sc-suggestions" class="suggestions" aria-live="polite"></div>
+
+      <div id="sc-results" class="results" role="status" aria-live="polite">
+        <div class="muted">Enter a symptom to see possible causes and first-aid steps.</div>
+      </div>
+
+      <div class="hint">Tip: try single-word symptoms for best matches (e.g., <em>fever</em>, <em>bleeding</em>, <em>allergy</em>).</div>
+    </div>
+
+    <aside class="sc-right" aria-hidden="false">
+      <div class="sc-icons" role="list">
+        <div class="sc-icon" role="listitem" title="Stethoscope">
+          <!-- stethoscope SVG -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="#0b6fa8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 7v5a6 6 0 0 1-12 0V7"></path>
+            <path d="M8 18v3a1 1 0 0 0 1 1h2"></path>
+            <circle cx="19" cy="19" r="2"></circle>
+          </svg>
+          <div style="font-weight:700;color:#07496e">Stethoscope</div>
+          <div class="muted" style="font-size:13px">For breathing/heart checks</div>
+        </div>
+
+        <div class="sc-icon" role="listitem" title="First Aid Kit">
+          <!-- first aid kit SVG -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="#07a06f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="7" width="20" height="14" rx="2"></rect>
+            <path d="M16 3H8v4h8V3z"></path>
+            <path d="M12 11v6"></path>
+            <path d="M9 14h6"></path>
+          </svg>
+          <div style="font-weight:700;color:#075f3f">First Aid</div>
+          <div class="muted" style="font-size:13px">Immediate care steps</div>
+        </div>
+
+        <div class="sc-icon" role="listitem" title="Thermometer">
+          <!-- thermometer SVG -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="#f5a623" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 14.76V5a2 2 0 0 0-4 0v9.76a4 4 0 1 0 4 0z"></path>
+          </svg>
+          <div style="font-weight:700;color:#7a4b10">Thermometer</div>
+          <div class="muted" style="font-size:13px">Fever & temperature</div>
+        </div>
+      </div>
+
+      <h4 style="margin-top:6px;margin-bottom:8px;color:#0b4fa1">Quick First Aid Hotline</h4>
+      <p style="margin:0 0 8px 0" class="muted">If someone is unconscious, not breathing, has severe chest pain, or heavy uncontrolled bleeding — call local emergency services immediately.</p>
+      <div style="display:flex;gap:8px">
+        <a href="tel:102" class="suggest-chip" style="background:#ffefef;border:1px solid #ffd5d5;color:#8a1b1b">Call Ambulance: 102</a>
+        <a href="tel:112" class="suggest-chip" style="background:#fff8e6;border:1px solid #ffecb3;color:#7a5200">Emergency: 112</a>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    // Symptom database (expandable). Each entry: causes[], firstAid string, severity ('normal'|'urgent'|'emergency')
+    const symptomDB = {
+      fever: {
+        causes: ["Viral infection (common cold, flu)", "Bacterial infection", "Heat exhaustion"],
+        firstAid: "Rest, fluids, paracetamol/acetaminophen if allowed, monitor temperature. Seek doctor if >39°C or fever >3 days, or signs of dehydration.",
+        severity: "normal"
+      },
+      cough: {
+        causes: ["Upper respiratory infection", "Bronchitis", "Allergic reaction"],
+        firstAid: "Stay hydrated, steam inhalation, honey for adults/older children, consult doctor if shortness of breath or blood in sputum.",
+        severity: "normal"
+      },
+      headache: {
+        causes: ["Tension headache", "Migraine", "Dehydration", "High blood pressure"],
+        firstAid: "Rest in a quiet, dark place; hydrate; OTC painkillers if appropriate. Seek immediate care if sudden severe headache or neurological symptoms.",
+        severity: "normal"
+      },
+      "chest pain": {
+        causes: ["Angina or heart attack", "Acid reflux", "Muscle strain", "Pulmonary embolism"],
+        firstAid: "Sit down calmly, call emergency services immediately (possible heart attack). Do not ignore severe crushing chest pain, sweating, nausea, or breathlessness.",
+        severity: "emergency"
+      },
+      bleeding: {
+        causes: ["Laceration (cut)", "Trauma", "Nosebleed"],
+        firstAid: "Apply direct pressure with clean cloth, elevate the injured area if possible. For nosebleed, lean forward and pinch nose. Seek help if bleeding is heavy or doesn't stop in 20 minutes.",
+        severity: "urgent"
+      },
+      burn: {
+        causes: ["Thermal (hot liquids, flame)", "Chemical", "Electrical"],
+        firstAid: "Cool with running water for at least 10 minutes. Remove tight clothing/jewellery, cover with sterile dressing, do not apply oils. Seek urgent care for large or deep burns.",
+        severity: "urgent"
+      },
+      fracture: {
+        causes: ["Falls", "Direct blow", "Twisting injury"],
+        firstAid: "Immobilize the limb (splint), avoid moving the person unnecessarily, apply ice, and seek medical attention. For open fractures, control bleeding and seek emergency help.",
+        severity: "urgent"
+      },
+      allergy: {
+        causes: ["Food (nuts, shellfish)", "Insect sting", "Medication"],
+        firstAid: "Mild: antihistamines and remove allergen. Severe (anaphylaxis): difficulty breathing, swelling, hives — use epinephrine auto-injector if available and call emergency services immediately.",
+        severity: "emergency"
+      },
+      diarrhea: {
+        causes: ["Gastroenteritis (viral/bacterial)", "Food poisoning", "Medications"],
+        firstAid: "Oral rehydration (ORS), clear fluids, avoid dairy for a while. Seek care for high fever, blood in stool, or signs of dehydration.",
+        severity: "normal"
+      },
+      vomiting: {
+        causes: ["Gastroenteritis", "Food poisoning", "Pregnancy"],
+        firstAid: "Small sips of clear fluids, rest. For persistent vomiting, inability to keep fluids, or blood, seek medical help.",
+        severity: "normal"
+      }
+    };
+
+    // Prepare suggestions index
+    const symptomKeys = Object.keys(symptomDB);
+
+    const input = document.getElementById('sc-input');
+    const btn = document.getElementById('sc-btn');
+    const results = document.getElementById('sc-results');
+    const suggBox = document.getElementById('sc-suggestions');
+
+    function renderSuggestions(filter = "") {
+      suggBox.innerHTML = "";
+      const q = filter.trim().toLowerCase();
+      const matches = q ? symptomKeys.filter(k => k.includes(q)) : symptomKeys.slice(0,6);
+      matches.slice(0,8).forEach(k=>{
+        const el = document.createElement('button');
+        el.type = 'button';
+        el.className = 'suggest-chip';
+        el.innerText = k;
+        el.onclick = ()=> { input.value = k; performCheck(k); };
+        suggBox.appendChild(el);
+      });
+      if(matches.length === 0) {
+        const nothing = document.createElement('div');
+        nothing.className = 'muted';
+        nothing.innerText = 'No suggestions. Try simpler words like "fever", "cough"';
+        suggBox.appendChild(nothing);
+      }
+    }
+
+    function isSevere(sym) {
+      return symptomDB[sym] && (symptomDB[sym].severity === 'urgent' || symptomDB[sym].severity === 'emergency');
+    }
+
+    function performCheck(query) {
+      const q = (query || input.value || "").trim().toLowerCase();
+      if(!q) {
+        results.innerHTML = '<div class="muted">Type a symptom to get started.</div>';
+        renderSuggestions();
+        return;
+      }
+
+      // exact or substring match preference
+      let exact = symptomKeys.find(k => k === q);
+      let partial = null;
+      if(!exact) {
+        partial = symptomKeys.find(k => k.includes(q) || q.includes(k));
+      }
+      const key = exact || partial;
+
+      if(key) {
+        const data = symptomDB[key];
+        results.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+            <div>
+              <h3 style="margin:0;color:#07496e">${key.charAt(0).toUpperCase()+key.slice(1)}</h3>
+              <div class="muted" style="margin-bottom:8px">Possible causes</div>
+              <ul class="causes">${data.causes.map(c => '<li>'+c+'</li>').join('')}</ul>
+            </div>
+            <div style="min-width:160px;text-align:right">
+              <div class="muted">Severity</div>
+              <div style="font-weight:800;margin-top:6px;color:${data.severity === 'emergency' ? '#7a0910' : (data.severity === 'urgent' ? '#a65a00' : '#0b6fa8')}">
+                ${data.severity.toUpperCase()}
+              </div>
+            </div>
+          </div>
+
+          <hr style="margin:12px 0; border:none; border-top:1px solid #f0f6fb" />
+
+          <div>
+            <h4 style="margin:0 0 6px 0;color:#075f8f">First Aid</h4>
+            <p class="firstaid" style="margin:0">${data.firstAid}</p>
+          </div>
+        `;
+
+        if(data.severity === 'emergency') {
+          const em = document.createElement('div');
+          em.className = 'emergency';
+          em.innerHTML = 'This is a potentially life-threatening symptom. Call emergency services immediately: <a href="tel:112" style="color:inherit;font-weight:800;text-decoration:underline">112</a>';
+          results.appendChild(em);
+        }
+      } else {
+        // No good match — show similar suggestions and general advice
+        const close = symptomKeys.filter(k => k.includes(q.slice(0,3)) || q.includes(k.slice(0,3))).slice(0,6);
+        results.innerHTML = `<div class="muted">No exact match for "<strong>${q}</strong>". Try one of these:</div>`;
+        const list = document.createElement('div');
+        list.className = 'suggestions';
+        close.forEach(c => {
+          const b = document.createElement('button');
+          b.className = 'suggest-chip';
+          b.innerText = c;
+          b.onclick = ()=> { input.value = c; performCheck(c); };
+          list.appendChild(b);
+        });
+        if(close.length === 0) {
+          const no = document.createElement('div');
+          no.className = 'muted';
+          no.innerText = 'Try simpler words: fever, cough, headache, bleeding, burn, allergy.';
+          list.appendChild(no);
+        }
+        results.appendChild(list);
+      }
+    }
+
+    // Event listeners
+    input.addEventListener('input', (e)=> {
+      renderSuggestions(e.target.value);
+    });
+
+    btn.addEventListener('click', ()=> performCheck());
+
+    input.addEventListener('keyup', (e)=>{
+      if(e.key === 'Enter') performCheck();
+    });
+
+    // initial suggestions
+    renderSuggestions();
+  </script>
+</section>

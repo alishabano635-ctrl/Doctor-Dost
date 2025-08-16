@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pregnancy & Baby Care Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background:#f8f9fa; }
+    header { background:#0ea5a4; color:white; padding:15px; text-align:center; }
+    .container { padding:20px; max-width:700px; margin:auto; }
+    .card { background:white; padding:15px; border-radius:10px; margin-bottom:15px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+    h2 { margin-top:0; color:#0ea5a4; }
+    input,textarea,select,button {
+      width:100%; padding:8px; margin:5px 0; border:1px solid #ddd; border-radius:6px;
+    }
+    button { background:#0ea5a4; color:white; cursor:pointer; }
+    .small { font-size:12px; color:#555; }
+    ul { padding-left:18px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🤰 Pregnancy & 👶 Baby Care Tracker</h1>
+  </header>
+  <div class="container">
+
+    <!-- Pregnancy Tracker -->
+    <div class="card">
+      <h2>Pregnancy Week Calculator</h2>
+      <label>Last Menstrual Period (LMP):</label>
+      <input type="date" id="lmpDate">
+      <button onclick="calculateWeeks()">Calculate</button>
+      <p id="pregnancyResult" class="small"></p>
+    </div>
+
+    <!-- Important Checkups -->
+    <div class="card">
+      <h2>Pregnancy Important Checkups</h2>
+      <label>Enter LMP Date:</label>
+      <input type="date" id="checkupLmp">
+      <button onclick="showCheckups()">Show Checkup Dates</button>
+      <ul id="checkupList"></ul>
+    </div>
+
+    <!-- Appointments -->
+    <div class="card">
+      <h2>Doctor Appointments</h2>
+      <label>Next Appointment Date:</label>
+      <input type="date" id="appointmentDate">
+      <button onclick="addAppointment()">Add Appointment</button>
+      <ul id="appointmentList"></ul>
+    </div>
+
+    <!-- Baby Vaccination -->
+    <div class="card">
+      <h2>Baby Vaccination Schedule</h2>
+      <label>Baby’s Birth Date:</label>
+      <input type="date" id="babyBirthDate">
+      <button onclick="generateVaccines()">Show Schedule</button>
+      <ul id="vaccineList"></ul>
+    </div>
+
+    <!-- Notes -->
+    <div class="card">
+      <h2>Notes / Doctor’s Advice</h2>
+      <textarea id="noteInput" rows="3" placeholder="Write a note..."></textarea>
+      <button onclick="addNote()">Save Note</button>
+      <ul id="noteList"></ul>
+    </div>
+
+  </div>
+
+<script>
+  // Pregnancy Calculator
+  function calculateWeeks(){
+    const lmp=document.getElementById("lmpDate").value;
+    if(!lmp){ alert("Please select a date"); return; }
+    const lmpDate=new Date(lmp);
+    const today=new Date();
+    const diff=(today-lmpDate)/(1000*60*60*24*7); // in weeks
+    const weeks=Math.floor(diff);
+    const dueDate=new Date(lmpDate.getTime()+(280*24*60*60*1000)); // 40 weeks
+    document.getElementById("pregnancyResult").innerHTML=
+      `You are approximately <b>${weeks} weeks</b> pregnant.<br>Estimated Due Date: <b>${dueDate.toDateString()}</b>`;
+  }
+
+  // Important Checkups
+  function showCheckups(){
+    const lmp=document.getElementById("checkupLmp").value;
+    if(!lmp){ alert("Please select LMP date"); return; }
+    const lmpDate=new Date(lmp);
+    const checkups=[
+      {name:"1st Visit (within 12 weeks)",weeks:12},
+      {name:"2nd Visit (around 26 weeks)",weeks:26},
+      {name:"3rd Visit (around 32 weeks)",weeks:32},
+      {name:"4th Visit (36+ weeks, then every 2 weeks)",weeks:36}
+    ];
+    const ul=document.getElementById("checkupList");
+    ul.innerHTML="";
+    checkups.forEach(c=>{
+      const due=new Date(lmpDate.getTime()+c.weeks*7*24*60*60*1000);
+      const li=document.createElement("li");
+      li.textContent=`${c.name} → ${due.toDateString()}`;
+      ul.appendChild(li);
+    });
+  }
+
+  // Appointments
+  function addAppointment(){
+    const date=document.getElementById("appointmentDate").value;
+    if(!date){ alert("Please choose a date"); return; }
+    const ul=document.getElementById("appointmentList");
+    const li=document.createElement("li");
+    li.textContent="📅 "+new Date(date).toDateString();
+    ul.appendChild(li);
+  }
+
+  // Vaccination Schedule
+  const vaccines=[
+    {name:"BCG + OPV-0 + Hepatitis B",weeks:0},
+    {name:"DTP-1 + IPV-1 + Hib-1 + HepB-2",weeks:6},
+    {name:"DTP-2 + IPV-2 + Hib-2",weeks:10},
+    {name:"DTP-3 + IPV-3 + Hib-3 + HepB-3",weeks:14},
+    {name:"MMR-1",weeks:36},
+    {name:"Booster DTP + OPV + Hib",weeks:72},
+  ];
+
+  function generateVaccines(){
+    const birth=document.getElementById("babyBirthDate").value;
+    if(!birth){ alert("Enter birth date"); return; }
+    const ul=document.getElementById("vaccineList");
+    ul.innerHTML="";
+    const birthDate=new Date(birth);
+    vaccines.forEach(v=>{
+      const due=new Date(birthDate.getTime()+v.weeks*7*24*60*60*1000);
+      const li=document.createElement("li");
+      li.textContent=`${v.name} → Due: ${due.toDateString()}`;
+      ul.appendChild(li);
+    });
+  }
+
+  // Notes
+  function addNote(){
+    const text=document.getElementById("noteInput").value;
+    if(!text){ alert("Write something"); return; }
+    const ul=document.getElementById("noteList");
+    const li=document.createElement("li");
+    li.textContent="📝 "+text;
+    ul.appendChild(li);
+    document.getElementById("noteInput").value="";
+  }
+</script>
+</body>
+</html>

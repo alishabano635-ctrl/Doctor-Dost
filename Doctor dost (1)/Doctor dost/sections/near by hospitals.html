@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hospital Ambulance Tracker (Offline)</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <style>
+    html, body, #map { height: 100%; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; }
+    #panel { position:absolute; top:10px; left:10px; width:320px; max-height:95%; overflow:auto; background:white; padding:10px; box-shadow:0 0 15px rgba(0,0,0,0.2); border-radius:8px; z-index:1000; }
+    .hospital, .ambulance { margin-bottom:8px; padding:6px; border:1px solid #eee; border-radius:6px; }
+    .hospital strong, .ambulance strong { color:#0ea5a4; }
+    button { background:#0ea5a4; color:white; border:none; padding:4px 6px; border-radius:6px; cursor:pointer; }
+    .small { font-size:12px; color:#555; }
+  </style>
+</head>
+<body>
+  <div id="panel">
+    <h3>Hospitals (Noida)</h3>
+    <div id="hospitalList"></div>
+    <h3>Ambulances</h3>
+    <div id="ambulanceList"></div>
+  </div>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    // Map setup
+    const map = L.map('map').setView([28.6304, 77.3720], 13);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution:'&copy; OpenStreetMap & CARTO', maxZoom:19
+    }).addTo(map);
+
+    // Hospitals data
+    const hospitals = [
+      {id:1,name:"SouleHealth City Hospital",lat:28.6304,lng:77.3720,phone:"9876543210",beds:30},
+      {id:2,name:"Fortis Noida",lat:28.6021,lng:77.3542,phone:"9876500001",beds:50},
+      {id:3,name:"Jaypee Hospital",lat:28.5633,lng:77.3262,phone:"9876500002",beds:45},
+      {id:4,name:"Max Multi Speciality",lat:28.6270,lng:77.3810,phone:"9876500003",beds:35},
+      {id:5,name:"Kailash Hospital",lat:28.5873,lng:77.3247,phone:"9876500004",beds:40},
+      {id:6,name:"Prayag Hospital",lat:28.6068,lng:77.3648,phone:"9876500005",beds:28},
+      {id:7,name:"Neo Hospital",lat:28.5905,lng:77.3486,phone:"9876500006",beds:33},
+      {id:8,name:"Cloudnine Noida",lat:28.6192,lng:77.3724,phone:"9876500007",beds:37},
+      {id:9,name:"Vinayak Hospital",lat:28.5838,lng:77.3194,phone:"9876500008",beds:32},
+      {id:10,name:"Apollo Noida",lat:28.6292,lng:77.3841,phone:"9876500009",beds:42}
+    ];
+
+    const hospitalMarkers = {};
+
+    function hospitalIcon(color="#ef4444"){
+      return L.divIcon({ html:<div style="background:${color};width:20px;height:20px;border-radius:50%;border:2px solid white"></div>, className:'', iconSize:[24,24], iconAnchor:[12,12] });
+    }
+
+    function renderHospitals(){
+      const list = document.getElementById('hospitalList'); list.innerHTML="";
+      hospitals.forEach(h=>{
+        const color = h.beds>0?"#10b981":"#9ca3af";
+        const marker = L.marker([h.lat,h.lng],{icon:hospitalIcon(color)}).addTo(map);
+        marker.bindPopup(<strong>${h.name}</strong><br/>📞 ${h.phone}<br/>🛏 Beds: <span id="beds-${h.id}">${h.beds}</span><br/><button onclick="requestBed(${h.id})">Request Lifebed</button>);
+        hospitalMarkers[h.id]=marker;
+
+        const div = document.createElement('div'); div.className='hospital';
+        div.innerHTML=<strong>${h.name}</strong><br/><span class="small">📞 ${h.phone} · 🛏 <span id="list-beds-${h.id}">${h.beds}</span></span>;
+        list.appendChild(div);
+      });
+    }
+
+    function updateBeds(id){
+      const h = hospitals.find(h=>h.id===id);
+      if(!h) return;
+      const span1 = document.getElementById(beds-${id}); if(span1) span1.textContent=h.beds;
+      const span2 = document.getElementById(list-beds-${id}); if(span2) span2.textContent=h.beds;
+      const marker = hospitalMarkers[id];
+      if(marker) marker.setIcon(hospitalIcon(h.beds>0?"#10b981":"#9ca3af"));
+    }
+
+    window.requestBed = function(id){
+      const h = hospitals.find(h=>h.id===id); if(!h || h.beds<=0) { alert("No beds available"); return; }
+      h.beds--; updateBeds(id); alert("Bed reserved (simulation)");
+    }
+
+    renderHospitals();
+
+    // Ambulances
+    const ambulances = [];
+    const ambulanceColors=["#0ea5a4","#ef4444","#f59e0b","#3b82f6","#a78bfa","#06b6d4","#f97316","#10b981","#ef6aa5","#8b5cf6"];
+    function ambulanceSvg(num,color){
+      const svg=<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><rect x='4' y='12' width='56' height='36' rx='8' ry='8' fill='${color}' stroke='white' stroke-width='2'/><circle cx='18' cy='52' r='5' fill='#222'/><circle cx='46' cy='52' r='5' fill='#222'/><text x='32' y='36' font-size='18' fill='white' font-weight='700' text-anchor='middle'>${num}</text></svg>;
+      return "data:image/svg+xml;utf8,"+encodeURIComponent(svg);
+    }
+    function ambulanceIconFor(num){ return L.icon({iconUrl:ambulanceSvg(num,ambulanceColors[(num-1)%ambulanceColors.length]),iconSize:[40,40],iconAnchor:[20,20]}); }
+
+    function randomNearby(){ return { lat:28.6304+(Math.random()-0.5)*0.04, lng:77.3720+(Math.random()-0.5)*0.04 }; }
+
+    function nearestHospital(lat,lng){
+      let best=hospitals[0],min=Infinity;
+      hospitals.forEach(h=>{ const d=Math.hypot(lat-h.lat,lng-h.lng); if(d<min){best=h;min=d;} });
+      return best;
+    }
+
+    function initAmbulances(){
+      const list=document.getElementById('ambulanceList'); list.innerHTML="";
+      for(let i=1;i<=15;i++){
+        const pos=randomNearby();
+        const dest=nearestHospital(pos.lat,pos.lng);
+        const marker=L.marker([pos.lat,pos.lng],{icon:ambulanceIconFor(i)}).addTo(map);
+        ambulances.push({id:i,lat:pos.lat,lng:pos.lng,destLat:dest.lat,destLng:dest.lng,marker});
+        const div=document.createElement('div'); div.className='ambulance';
+        div.innerHTML=<strong>Ambulance ${i}</strong><br/><span class="small">Dest: ${dest.name}</span>;
+        list.appendChild(div);
+      }
+    }
+
+    function moveAmbulances(){
+      ambulances.forEach(a=>{
+        const dx=a.destLat-a.lat,dy=a.destLng-a.lng;
+        const step=0.001;
+        if(Math.abs(dx)<0.0001 && Math.abs(dy)<0.0001){
+          const dest=nearestHospital(a.lat,a.lng);
+          a.destLat=dest.lat; a.destLng=dest.lng;
+        }else{
+          a.lat+=dx*step*10; a.lng+=dy*step*10; a.marker.setLatLng([a.lat,a.lng]);
+        }
+      });
+    }
+
+    initAmbulances();
+    setInterval(moveAmbulances,2000);
+    setInterval(()=>{
+      hospitals.forEach(h=>{ h.beds=Math.max(0,h.beds+Math.floor(Math.random()*3-1)); updateBeds(h.id); });
+    },10000);
+
+  </script>
+</body>
+</html>

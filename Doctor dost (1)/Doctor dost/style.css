@@ -1,0 +1,121 @@
+/* Reset and smooth scrolling */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    scroll-behavior: smooth;
+}
+
+html {
+    scroll-padding-top: 120px; /* Stops sticky header from covering section titles */
+}
+
+/* Body Styling */
+body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(to bottom right, #e0f7fa, #ffffff);
+    color: #333;
+}
+
+/* Header Styling */
+header {
+    background: #0077b6;
+    color: white;
+    padding: 15px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.logo-title {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.logo-title img {
+    height: 50px;
+    width: auto;
+}
+
+header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+header p {
+    font-size: 0.9rem;
+    opacity: 0.85;
+}
+
+/* Navigation Styling */
+nav {
+    margin-top: 10px;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    margin: 0 4px; /* margin kam */
+    padding: 7px 10px; /* height/width kam */
+    background: #0096c7;
+    border-radius: 7px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    font-size: 14px; /* chhota font */
+    white-space: nowrap; /* ek hi line me rahe */
+}
+
+nav a:hover {
+    background: #00b4d8;
+    transform: translateY(-2px);
+}
+
+/* Section Styling */
+main {
+    padding: 20px;
+}
+
+section {
+    background: white;
+    padding: 25px;
+    margin: 25px auto;
+    border-radius: 12px;
+    max-width: 900px;
+    text-align: center;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+section:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+section h2 {
+    color: #0077b6;
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+}
+
+.placeholder {
+    background: linear-gradient(to right, #74b9ff, #a29bfe);
+    color: white;
+    height: 180px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 600;
+    font-size: 1.2rem;
+    border-radius: 8px;
+}
+
+/* Footer */
+footer {
+    background: #0077b6;
+    color: white;
+    text-align: center;
+    padding: 15px;
+    margin-top: 30px;
+}

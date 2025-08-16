@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Nearby Hospitals + SOS (Single File)</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <style>
+    :root{--bg:#061124;--card:#0f1a33;--muted:#9fb0df;--text:#eaf2ff;--accent:#4f8cff;--good:#27c93f;--bad:#ff5f56}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,var(--bg),#07142a);color:var(--text)}
+    header{position:sticky;top:0;background:rgba(2,8,20,.6);backdrop-filter:blur(6px);z-index:1000;border-bottom:1px solid rgba(255,255,255,0.03)}
+    h1{margin:0;padding:14px 18px;font-size:18px;display:flex;gap:10px;align-items:center}
+    .wrap{display:grid;grid-template-columns:360px 1fr;min-height:calc(100vh - 56px)}
+    @media(max-width:980px){.wrap{grid-template-columns:1fr}.panel{order:2}#map{height:55vh}}
+    .panel{background:var(--card);border-right:1px solid rgba(255,255,255,0.03)}
+    .section{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03)}
+    .row{display:flex;gap:8px;align-items:center}
+    button, .btn{background:#0b1740;border:1px solid rgba(255,255,255,0.04);color:var(--text);padding:8px 10px;border-radius:10px;cursor:pointer}
+    .btn-primary{background:var(--accent);color:#05102a;border-color:rgba(255,255,255,0.06);font-weight:700}
+    .btn-danger{background:var(--bad);color:#fff}
+    .btn-good{background:var(--good);color:#052014}
+    .list{padding:8px 12px;display:grid;gap:10px;max-height:calc(100vh - 300px);overflow:auto}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:10px;border:1px solid rgba(255,255,255,0.02)}
+    .muted{color:var(--muted);font-size:13px}
+    input[type=text], input[type=number]{background:#07132a;border:1px solid rgba(255,255,255,0.03);color:var(--text);padding:8px;border-radius:8px}
+    #map{height:calc(100vh - 56px);width:100%}
+    .pill{padding:4px 8px;border-radius:999px;background:rgba(255,255,255,0.02);font-size:12px;border:1px solid rgba(255,255,255,0.02)}
+    /* simple modal for showing all results */
+    .modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.6); z-index: 2000; }
+    .modal .box { width: 90%; max-width: 760px; background: var(--card); border-radius: 12px; padding: 14px; border:1px solid rgba(255,255,255,0.04); max-height: 80vh; overflow:auto }
+    .modal .box pre { white-space: pre-wrap; word-break: break-word; color: var(--text); }
+    table.summary { width:100%; border-collapse: collapse; margin-top: 8px }
+    table.summary th, table.summary td { border:1px solid rgba(255,255,255,0.04); padding:6px; text-align:left; font-size:13px }
+    table.summary th { background: rgba(255,255,255,0.02) }
+  </style>
+</head>
+<body>
+  <header><h1>🏥 Nearby Hospitals Finder — Location + Map + SOS</h1></header>
+  <div class="wrap">
+    <aside class="panel">
+      <div class="section">
+        <div class="row" style="justify-content:space-between">
+          <div style="display:flex;gap:8px">
+            <button id="locBtn" class="btn-primary">📍 Get Current Location</button>
+            <button id="fetchBtn">🔎 Find Hospitals</button>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <label class="muted">Radius (m)</label>
+            <input id="radius" type="number" value="3000" style="width:90px" />
+          </div>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <input id="searchBox" type="text" placeholder="Search by name…" />
+          <button id="clearSearch">Clear</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="row" style="gap:8px">
+          <button id="sos112" class="btn-danger">🚨 Call 112</button>
+          <button id="sos108" class="btn-danger">🚑 Call 108</button>
+          <button id="smsSOS">📩 SMS/WhatsApp SOS</button>
+        </div>
+        <div class="muted" style="margin-top:8px">Tip: 112 = National emergency. 108/102 for ambulance depending on state.</div>
+      </div>
+
+      <div class="section">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong>🚑 Ambulance Tracking</strong>
+          <div id="etaInfo" class="muted">ETA: —</div>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button id="startTrack" class="btn-good">Start from Selected Hospital → Me</button>
+          <button id="stopTrack">Stop</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong>Nearby Hospitals</strong>
+          <span id="countLabel" class="muted">0</span>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button id="showAll" class="btn">📋 Show All Results</button>
+          <button id="exportCsv" class="btn">⬇️ Export CSV</button>
+        </div>
+      </div>
+
+      <div id="list" class="list"></div>
+
+      <div class="section muted small" style="font-size:12px">Last fetched hospitals are shown above. "Show All Results" opens a window with full JSON/CSV and "Export CSV" downloads the CSV of current results (including saved Beds/ICU/OPD fields).</div>
+
+      <!-- Summary table (live) -->
+      <div class="section">
+        <strong>All Results Summary</strong>
+        <div id="summaryContainer">
+          <table class="summary" id="summaryTable">
+            <thead><tr><th>Name</th><th>Distance (km)</th><th>Address</th><th>Beds</th><th>ICU</th><th>OPD ₹</th></tr></thead>
+            <tbody id="summaryBody"><tr><td colspan="6" class="muted">No data</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+    </aside>
+
+    <main>
+      <div id="map"></div>
+    </main>
+  </div>
+
+  <div id="modal" class="modal"><div class="box"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><strong>All Results</strong><div><button id="copyJson" class="btn">Copy JSON</button> <button id="closeModal" class="btn">Close</button></div></div><pre id="modalContent">No results</pre></div></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script>
+    // Single-file app: Nearby hospitals + SOS + simulated ambulance tracking
+
+    // --- State ---
+    const state = { map: null, meMarker: null, myLatLng: null, hospitals: [], markers: [], selectedHospital: null, track: { marker: null, timer: null, speedKmph: 28 } };
+    const bedsDataKey = 'bedsData_v1';
+    const localBeds = JSON.parse(localStorage.getItem(bedsDataKey) || '{}');
+
+    // --- Helpers ---
+    const toKm = m => (m/1000).toFixed(2);
+    const haversine = (lat1, lon1, lat2, lon2) => {
+      const R = 6371e3; const toRad = d => d * Math.PI/180;
+      const dLat = toRad(lat2-lat1), dLon = toRad(lon2-lon1);
+      const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+      return 2*R*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    };
+    function saveBeds(){ localStorage.setItem(bedsDataKey, JSON.stringify(localBeds)); }
+
+    function initMap(){ if(state.map) return; state.map = L.map('map');
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(state.map);
+      state.map.setView([20.5937,78.9629],5);
+    }
+
+    function setMe(lat, lon){ state.myLatLng = [lat, lon]; if(!state.meMarker) { state.meMarker = L.marker([lat, lon], {title:'You'}).addTo(state.map); } else state.meMarker.setLatLng([lat, lon]); state.map.setView([lat, lon], 14); }
+
+    async function getLocation(){ return new Promise((resolve, reject)=>{
+      if(!navigator.geolocation) return reject(new Error('Geolocation not supported'));
+      navigator.geolocation.getCurrentPosition(pos => resolve(pos.coords), err => reject(err), { enableHighAccuracy: true, timeout:15000 });
+    }); }
+
+    // Parse Overpass results safely
+    function parseOverpassElements(elements, originLat, originLon){
+      return (elements || []).map(e => {
+        const latlng = e.type === 'node' ? [e.lat, e.lon] : [e.center?.lat, e.center?.lon];
+        const tags = e.tags || {};
+        // safe phone extraction: try common variants
+        const phone = tags.phone || tags['contact:phone'] || tags['contact:mobile'] || tags['mobile'] || tags['contact:phone:mobile'] || '';
+        const name = tags.name || 'Unnamed';
+        const addrParts = [tags['addr:housenumber'], tags['addr:street'], tags['addr:city'], tags['addr:state']].filter(Boolean);
+        return { id: e.id, type: tags.amenity || tags.shop || '', name, phone, addr: addrParts.join(', '), lat: latlng[0], lon: latlng[1] };
+      }).filter(x => x.lat && x.lon).map(el => { el.distM = haversine(originLat, originLon, el.lat, el.lon); return el; }).sort((a,b)=>a.distM-b.distM);
+    }
+
+    async function fetchHospitalsAround(lat, lon, radiusMeters = 3000){
+      // Overpass QL: hospitals and clinics
+      const q = `data=${encodeURIComponent(`
+        [out:json][timeout:25];
+        (
+          node["amenity"="hospital"](around:${radiusMeters},${lat},${lon});
+          way["amenity"="hospital"](around:${radiusMeters},${lat},${lon});
+          node["amenity"="clinic"](around:${radiusMeters},${lat},${lon});
+          way["amenity"="clinic"](around:${radiusMeters},${lat},${lon});
+        );
+        out center tags;`)};
+      const url = https://overpass-api.de/api/interpreter?${q}`;
+      const res = await fetch(url);
+      if(!res.ok) throw new Error('Overpass API error ' + res.status);
+      const data = await res.json();
+      return parseOverpassElements(data.elements, lat, lon);
+    }
+
+    // --- Render ---
+    function renderList(){
+      const q = document.getElementById('searchBox').value.trim().toLowerCase();
+      const list = document.getElementById('list'); list.innerHTML = '';
+      const filtered = state.hospitals.filter(h => h.name.toLowerCase().includes(q));
+      document.getElementById('countLabel').textContent = filtered.length;
+      filtered.forEach(h => {
+        const beds = localBeds[h.name]?.beds ?? '';
+        const icu = localBeds[h.name]?.icu ?? '';
+        const opd = localBeds[h.name]?.opd ?? '';
+        const card = document.createElement('div'); card.className = 'card';
+        card.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <div style="font-weight:700">${h.name} <span class="pill">${h.type || ''}</span></div>
+              <div class="muted">${h.addr || ''}</div>
+              <div class="muted" style="font-family:monospace">${toKm(h.distM)} km</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <button data-act="center" data-id="${h.id}">📍</button>
+              <button data-act="dir" data-id="${h.id}">🧭</button>
+              <button data-act="select" data-id="${h.id}">✅</button>
+            </div>
+          </div>
+          <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            Beds: <input data-edit="beds" data-id="${h.id}" type="number" placeholder="${beds}" style="width:80px" />
+            ICU: <input data-edit="icu" data-id="${h.id}" type="number" placeholder="${icu}" style="width:80px" />
+            OPD ₹: <input data-edit="opd" data-id="${h.id}" type="number" placeholder="${opd}" style="width:100px" />
+            <button data-act="save" data-id="${h.id}">💾 Save</button>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+
+      // Attach handlers
+      list.querySelectorAll('button').forEach(btn=> btn.addEventListener('click', e=>{
+        const id = e.currentTarget.getAttribute('data-id'); const act = e.currentTarget.getAttribute('data-act');
+        const h = state.hospitals.find(x => String(x.id) === String(id)); if(!h) return;
+        if(act === 'center'){ state.map.setView([h.lat, h.lon], 17); const m = state.markers.find(m=>m.hid===h.id); if(m) m.leaf.openPopup(); }
+        else if(act === 'dir'){ window.open(`https://www.google.com/maps/dir/?api=1&destination=${h.lat},${h.lon}`,'_blank'); }
+        else if(act === 'select'){ state.selectedHospital = h; alert(`Selected: ${h.name}. Click Start to simulate ambulance.`); }
+        else if(act === 'save'){
+          const root = e.currentTarget.closest('.card'); const edits = root.querySelectorAll('input[data-edit]');
+          const rec = localBeds[h.name] || {};
+          edits.forEach(inp=>{ const k = inp.getAttribute('data-edit'); const v = inp.value.trim(); if(v!=='') rec[k] = Number(v); });
+          localBeds[h.name] = rec; saveBeds(); renderList(); updateSummary();
+        }
+      }))
+    }
+
+    function renderMarkers(){ state.markers.forEach(m=> state.map.removeLayer(m.leaf)); state.markers = [];
+      state.hospitals.forEach(h => {
+        const popup = `<strong>${h.name}</strong><br>${h.addr || ''}<br>${toKm(h.distM)} km<br>Beds: ${localBeds[h.name]?.beds ?? '—'} | ICU: ${localBeds[h.name]?.icu ?? '—'}<br><div style="margin-top:6px"><button onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${h.lat},${h.lon}','_blank')">Directions</button> <a href=\"tel:${h.phone || ''}\" ${h.phone? '' : 'style=opacity:.5;pointer-events:none'}>📞 Call</a></div>`;
+        const m = L.marker([h.lat, h.lon]).addTo(state.map).bindPopup(popup);
+        state.markers.push({hid: h.id, leaf: m});
+      });
+    }
+
+    // --- Summary table update ---
+    function updateSummary(){
+      const body = document.getElementById('summaryBody'); body.innerHTML = '';
+      if(state.hospitals.length === 0){ body.innerHTML = `<tr><td colspan="6" class="muted">No data</td></tr>`; return; }
+      state.hospitals.forEach(h => {
+        const beds = localBeds[h.name]?.beds ?? '';
+        const icu = localBeds[h.name]?.icu ?? '';
+        const opd = localBeds[h.name]?.opd ?? '';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${h.name}</td><td>${toKm(h.distM)}</td><td>${h.addr || ''}</td><td>${beds}</td><td>${icu}</td><td>${opd}</td>`;
+        body.appendChild(tr);
+      });
+    }
+
+    // --- Export / Show All ---
+    function getResultsArray(){
+      return state.hospitals.map(h => ({
+        id: h.id,
+        name: h.name,
+        type: h.type,
+        phone: h.phone,
+        address: h.addr,
+        lat: h.lat,
+        lon: h.lon,
+        distance_km: Number(toKm(h.distM)),
+        beds: localBeds[h.name]?.beds ?? '',
+        icu: localBeds[h.name]?.icu ?? '',
+        opd: localBeds[h.name]?.opd ?? ''
+      }));
+    }
+    function showAllResults(){
+      const arr = getResultsArray();
+      document.getElementById('modalContent').textContent = JSON.stringify(arr, null, 2);
+      document.getElementById('modal').style.display = 'flex';
+    }
+    function exportCSV(){
+      const arr = getResultsArray();
+      if(arr.length === 0) return alert('No results to export');
+      const header = Object.keys(arr[0]);
+      const rows = arr.map(r => header.map(h => `"${String(r[h] ?? '').replace(/"/g,'""')}"`).join(','));
+      const csv = [header.join(','), ...rows].join('');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'hospitals_results.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    }
+
+    // --- Ambulance tracking (simulation) ---
+    function startTracking(){
+      if(!state.selectedHospital) return alert('Please select a hospital from the list first.');
+      if(!state.myLatLng) return alert('Please get your current location first.');
+      stopTracking();
+      const src = L.latLng(state.selectedHospital.lat, state.selectedHospital.lon);
+      const dst = L.latLng(state.myLatLng[0], state.myLatLng[1]);
+      const totalDist = src.distanceTo(dst);
+      const speed = state.track.speedKmph * 1000 / 3600; // m/s
+      const totalTime = totalDist / speed; // sec
+      let t = 0; const step = 1;
+      const marker = L.marker(src, {title:'Ambulance'}).addTo(state.map).bindPopup('🚑 Ambulance'); state.track.marker = marker;
+      state.track.timer = setInterval(()=>{
+        t += step; const p = Math.min(1, t/totalTime);
+        const lat = src.lat + (dst.lat - src.lat) * p; const lng = src.lng + (dst.lng - src.lng) * p;
+        marker.setLatLng([lat, lng]); const rem = (1-p) * totalDist; const etaSec = rem / speed; document.getElementById('etaInfo').textContent = `ETA: ${Math.max(0, Math.round(etaSec/60))} min`;
+        if(p >= 1){ stopTracking(); document.getElementById('etaInfo').textContent = 'ETA: Arrived'; alert('Ambulance reached (simulation).'); }
+      }, 1000);
+      state.map.fitBounds(L.latLngBounds([src, dst]).pad(0.2));
+    }
+    function stopTracking(){ if(state.track.timer){ clearInterval(state.track.timer); state.track.timer = null; } if(state.track.marker){ state.map.removeLayer(state.track.marker); state.track.marker = null; } document.getElementById('etaInfo').textContent = 'ETA: —'; }
+
+    // --- UI Events ---
+    document.getElementById('locBtn').addEventListener('click', async ()=>{
+      initMap(); try{ const c = await getLocation(); setMe(c.latitude, c.longitude); }catch(err){ alert('Location error: ' + err.message + "Allow location permission and try again."); }});
+
+    document.getElementById('fetchBtn').addEventListener('click', async ()=>{
+      initMap(); if(!state.myLatLng) return alert('Get current location first.');
+      const [lat, lon] = state.myLatLng; const radius = Number(document.getElementById('radius').value) || 3000;
+      try{ const hospitals = await fetchHospitalsAround(lat, lon, radius); state.hospitals = hospitals; renderList(); renderMarkers(); updateSummary(); }
+      catch(err){ console.error(err); alert('Failed to fetch nearby hospitals: ' + (err.message || 'Unknown error')) }
+    });
+
+    document.getElementById('searchBox').addEventListener('input', renderList);
+    document.getElementById('clearSearch').addEventListener('click', ()=>{ document.getElementById('searchBox').value=''; renderList(); });
+    document.getElementById('startTrack').addEventListener('click', startTracking);
+    document.getElementById('stopTrack').addEventListener('click', stopTracking);
+
+    document.getElementById('sos112').addEventListener('click', ()=>{ window.location.href = 'tel:112'; });
+    document.getElementById('sos108').addEventListener('click', ()=>{ window.location.href = 'tel:108'; });
+    document.getElementById('smsSOS').addEventListener('click', ()=>{
+      const msg = encodeURIComponent('Emergency! Need ambulance at my location. Please respond.');
+      const wa = `https://wa.me/?text=${msg}`; window.open(wa,'_blank');
+    });
+
+    document.getElementById('showAll').addEventListener('click', showAllResults);
+    document.getElementById('exportCsv').addEventListener('click', exportCSV);
+    document.getElementById('closeModal').addEventListener('click', ()=>{ document.getElementById('modal').style.display = 'none'; });
+    document.getElementById('copyJson').addEventListener('click', ()=>{ navigator.clipboard.writeText(document.getElementById('modalContent').textContent).then(()=>alert('Copied JSON to clipboard')) });
+
+    // Auto init
+    initMap();
+  </script>
+</body>
+</html>

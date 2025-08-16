@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Medicine Alarm</title>
+  <style>
+    body { font-family: Arial; background: #f0f4f8; padding: 20px; }
+    h1 { color: #0b84ff; }
+    input, button { padding: 10px; margin: 5px 0; border-radius: 5px; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h1>Medicine Alarm</h1>
+  <label>Medicine Name:</label><br>
+  <input type="text" id="medName" placeholder="Paracetamol"><br>
+  
+  <label>Time (HH:MM 24h):</label><br>
+  <input type="time" id="medTime"><br>
+  
+  <button id="setAlarm">Set Alarm</button>
+
+  <audio id="alarmSound" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"></audio>
+
+  <script>
+    const medNameInput = document.getElementById('medName');
+    const medTimeInput = document.getElementById('medTime');
+    const setAlarmBtn = document.getElementById('setAlarm');
+    const alarmSound = document.getElementById('alarmSound');
+
+    // Request notification permission
+    if (Notification.permission !== "granted") {
+      Notification.requestPermission();
+    }
+
+    setAlarmBtn.addEventListener('click', () => {
+      const medName = medNameInput.value || 'Medicine';
+      const time = medTimeInput.value;
+      if(!time) return alert('Please set a valid time');
+
+      alert(`Alarm set for ${medName} at ${time}`);
+
+      const [hours, minutes] = time.split(':').map(Number);
+
+      function checkTime() {
+        const now = new Date();
+        if (now.getHours() === hours && now.getMinutes() === minutes) {
+          // Play alarm sound
+          alarmSound.play();
+          // Show notification
+          if (Notification.permission === "granted") {
+            new Notification('Medicine Reminder', { body: `Time to take ${medName}` });
+          } else {
+            alert(`Time to take ${medName}`);
+          }
+        }
+      }
+
+      // Check every second
+      setInterval(checkTime, 1000);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+import javax.swing.*;
+import java.awt.event.*;
+import java.util.HashMap;
+
+public class AyushmanCardFull {
+    public static void main(String[] args) {
+        // Sample data for simulation
+        HashMap<String, String> cardData = new HashMap<>();
+        cardData.put("AB12345", "Free checkups, Cashless treatment, Coverage ₹5 Lakh, Maternal & Pediatric care");
+        cardData.put("AB54321", "Free checkups, Coverage ₹5 Lakh, Empaneled hospitals access");
+        cardData.put("AB99999", "No special benefits");
+
+        // Create frame
+        JFrame frame = new JFrame("Ayushman Bharat Eligibility & Benefits");
+        frame.setSize(700, 500);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLayout(null);
+
+        // Labels
+        JLabel incomeLabel = new JLabel("Enter annual family income (INR):");
+        incomeLabel.setBounds(50, 50, 250, 25);
+        frame.add(incomeLabel);
+
+        JLabel membersLabel = new JLabel("Enter number of family members:");
+        membersLabel.setBounds(50, 100, 250, 25);
+        frame.add(membersLabel);
+
+        JLabel ruralLabel = new JLabel("Are you from rural area? (yes/no):");
+        ruralLabel.setBounds(50, 150, 250, 25);
+        frame.add(ruralLabel);
+
+        JLabel cardLabel = new JLabel("Enter your Ayushman Card Number:");
+        cardLabel.setBounds(50, 200, 250, 25);
+        frame.add(cardLabel);
+
+        JLabel resultLabel = new JLabel("");
+        resultLabel.setBounds(50, 300, 600, 150);
+        frame.add(resultLabel);
+
+        // Text fields
+        JTextField incomeField = new JTextField();
+        incomeField.setBounds(320, 50, 200, 25);
+        frame.add(incomeField);
+
+        JTextField membersField = new JTextField();
+        membersField.setBounds(320, 100, 200, 25);
+        frame.add(membersField);
+
+        JTextField ruralField = new JTextField();
+        ruralField.setBounds(320, 150, 200, 25);
+        frame.add(ruralField);
+
+        JTextField cardField = new JTextField();
+        cardField.setBounds(320, 200, 200, 25);
+        frame.add(cardField);
+
+        // Button
+        JButton checkButton = new JButton("Check Eligibility & Benefits");
+        checkButton.setBounds(200, 250, 300, 30);
+        frame.add(checkButton);
+
+        // Button action
+        checkButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    double income = Double.parseDouble(incomeField.getText());
+                    int members = Integer.parseInt(membersField.getText());
+                    String rural = ruralField.getText().trim();
+                    String cardNumber = cardField.getText().trim().toUpperCase();
+
+                    boolean eligible = (income <= 50000 && members <= 5) || rural.equalsIgnoreCase("yes");
+
+                    StringBuilder output = new StringBuilder("<html>");
+                    if (eligible) {
+                        output.append("You are eligible for Ayushman Bharat benefits:<br>");
+                        if (cardData.containsKey(cardNumber)) {
+                            output.append("Personalized Benefits:<br>");
+                            output.append(cardData.get(cardNumber).replaceAll(", ", "<br>"));
+                        } else {
+                            output.append("General Benefits:<br>");
+                            output.append("Free health checkups<br>");
+                            output.append("Cashless treatment<br>");
+                            output.append("Coverage up to ₹5 Lakh<br>");
+                            output.append("Access to empaneled hospitals<br>");
+                            output.append("Maternal & pediatric care");
+                        }
+                    } else {
+                        output.append("You are not eligible under current criteria.<br>");
+                        output.append("Check official website: https://www.pmjay.gov.in/");
+                    }
+                    output.append("</html>");
+
+                    resultLabel.setText(output.toString());
+                } catch (NumberFormatException ex) {
+                    resultLabel.setText("Please enter valid numbers for income and family members.");
+                }
+            }
+        });
+
+        frame.setVisible(true);
+    }
+}
